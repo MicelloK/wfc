@@ -1,19 +1,6 @@
 
 
-const MAP_SIZE = Number(getComputedStyle(document.documentElement).getPropertyValue('--map-size'));
 
-const MAP_PIECES: { [key: number]: string } = {
-    0: "vertical-line",
-    1: "horizontal-line",
-    2: "top-right-twist",
-    3: "top-left-twist",
-    4: "bottom-right-twist",
-    5: "bottom-left-twist",
-    6: "top-fork",
-    7: "bottom-fork",
-    8: "right-fork",
-    9: "left-fork",
-};
 
 enum Direction {
     top,
@@ -36,15 +23,8 @@ const COLLAPSE_RULES: { [key: number]: number[] } = {
 };
 
 
-const possibleMapPieces = Object.keys(MAP_PIECES).map((key) => Number(key));
 
-function getNewMap(): number[][][] {
-    const map: number[][][] = Array.from({ length: MAP_SIZE }, () =>
-        Array.from({ length: MAP_SIZE }, () => 
-            [...possibleMapPieces])
-    );
-    return map;
-}
+
 
 function getOppositeSide(side: Direction): Direction {
     switch(side) {
@@ -72,105 +52,256 @@ function getNextCoords(x: number, y: number, side: Direction): [number, number] 
     }
 }
 
-function getLowestEntropyElementCoords(map: number[][][]): [number, number] {
-    let lowestEntropy = Infinity;
-    let lowestEntropyCoords: [number, number] = [0, 0];
-    map.forEach((row, y) => {
-        row.forEach((element, x) => {
-            if (element.length > 1 && element.length < lowestEntropy) {
-                lowestEntropy = element.length;
-                lowestEntropyCoords = [x, y];
-            }
-        });
-    });
-    return lowestEntropyCoords;
-}
-
-class WaveFunction {
-    map: number[][][];
-    constructor(map: number[][][]) {
-        this.map = map;
+class MapElement {
+    possiblePieces;
+    collapsedPiece: number;
+    constructor(possibleMapPieces: number[]) {
+        this.possiblePieces = new Set<number>(possibleMapPieces);
+        this.collapsedPiece = -1;
     }
 
-    propagate(coords: [number, number], side: Direction, value: number | null): void {
-        // side - side of the element from which the propagation is happening
-        const [x, y] = coords;
-        let spliced = false;
-        
-        if(value !== null) {
-            this.map[y][x].forEach((element) => {
-                if(COLLAPSE_RULES[element][side] != value) {
-                    this.map[y][x].splice(this.map[y][x].indexOf(element), 1);
-                    spliced = true;
-                }
+    getEntropy(): number {
+        return this.possiblePieces.size;
+    }
+
+    isCollapsed(): boolean {
+        return this.collapsedPiece != -1;
+    }
+
+    drawPiece(): void {
+        const randomPiece = [...this.possiblePieces][Math.floor(Math.random() * this.possiblePieces.size)];
+        this.collapsedPiece = randomPiece;
+        console.log("random!!!");
+    }
+
+    deletePiece(piece: number): void {
+        this.possiblePieces.delete(piece);
+        if(this.possiblePieces.size == 1) {
+            console.log("aaaaaaaaaaaaa");
+            this.drawPiece();
+        }
+    }
+
+    getRemainingValues(side: Direction): Set<number> {
+        const remainingValues = new Set<number>();
+
+        if(this.isCollapsed()) {
+            remainingValues.add(COLLAPSE_RULES[this.collapsedPiece][side])
+        }
+        else {
+            [...this.possiblePieces].forEach((piece) => {
+                remainingValues.add(COLLAPSE_RULES[piece][side]);
             });
         }
-        if(spliced) {
-            for(const side in Direction) {
-                if(!isNaN(Number(side))) {
-                    let remainingValues = new Set<number>();
-                    this.map[y][x].forEach((element) => {
-                        remainingValues.add(COLLAPSE_RULES[element][side]);
-                    });
-                    if(remainingValues.size == 1) {
-                        let [newX, newY] = getNextCoords(x, y, Number(side));
-                        if(newX >= 0 && newY >= 0) {
-                            this.propagate(getNextCoords(x, y, Number(side)), getOppositeSide(Number(side)), [...remainingValues][0]);
-                        }
-                    }
-                }
-            }
-        }
+      
+        return remainingValues;
     }
 
-    collapse(coords: [number, number]): number {
+    removeValues(value: number, side: Direction, collapseRules: { [key: number]: number[] }): boolean {
+        let removed = false;
+        [...this.possiblePieces].forEach((piece) => {
+            if(collapseRules[piece][side] != value) {
+                this.deletePiece(piece);
+                removed = true;
+            }
+        });
+        return removed;
+    }
+}
+
+
+class GameMap {
+    MAP_SIZE = Number(getComputedStyle(document.documentElement).getPropertyValue('--map-size'));
+
+    MAP_PIECES: { [key: number]: string } = {
+        0: "vertical-line",
+        1: "horizontal-line",
+        2: "top-right-twist",
+        3: "top-left-twist",
+        4: "bottom-right-twist",
+        5: "bottom-left-twist",
+        6: "top-fork",
+        7: "bottom-fork",
+        8: "right-fork",
+        9: "left-fork",
+    };
+
+    map: MapElement[][];
+
+    constructor() {
+        const possibleMapPieces = Object.keys(this.MAP_PIECES).map((key) => Number(key));
+
+        this.map = Array.from({ length: this.MAP_SIZE }, () =>
+            Array.from({ length: this.MAP_SIZE }, () => 
+                new MapElement(possibleMapPieces))
+        );
+    }
+
+    getLowestEntropyElementCoords(): [number, number] {
+        let lowestEntropy = Infinity;
+        let lowestEntropyCoords: number[][] = []
+        this.map.forEach((row, y) => {
+            row.forEach((element, x) => {
+                if(!element.isCollapsed() && element.getEntropy() == lowestEntropy) {
+                    lowestEntropyCoords.push([x, y]);
+                }
+                if(!element.isCollapsed() && element.getEntropy() < lowestEntropy) {
+                    lowestEntropyCoords = [];
+                    lowestEntropy = element.getEntropy();
+                    lowestEntropyCoords.push([x, y])
+                }
+            });
+        });
+        const [x, y] = lowestEntropyCoords[Math.floor(Math.random() * lowestEntropyCoords.length)];
+        return [x, y];
+    }
+
+    drawPieceOnCoords(coords: [number, number]): void {
         const [x, y] = coords;
-        const element = this.map[y][x][Math.floor(Math.random() * this.map[y][x].length)];
-        this.map[y][x] = [element];
-        return element;
+        this.map[y][x].drawPiece();
     }
 
     isFullCollapsed(): boolean {
         let isCollapsed = true;
         this.map.forEach((row) => {
             row.forEach((element) => {
-                if(element.length > 1) {
+                if(!element.isCollapsed()) {
                     isCollapsed = false;
                 }
-            });
+            })
         });
-        if(isCollapsed) {
-            this.drawMap();
-        }
         return isCollapsed;
     }
 
-    run(): void {
-        if(!this.isFullCollapsed()) {
-            requestAnimationFrame(() => this.run());
-        }
-        const coords = getLowestEntropyElementCoords(this.map);
-        this.collapse(coords);
-        this.propagate(coords, Direction.top, null);
+    getElement(coords: [number, number]): MapElement {
+        const [x, y] = coords;
+        return this.map[y][x];
     }
 
-    drawMap(): void {
+    inBounds(coords: [number, number]): boolean {
+        const [x, y] = coords;
+        return x >= 0 && x < this.MAP_SIZE && y >= 0 && y < this.MAP_SIZE;
+    }
+
+    draw(): void {
         const mapElement = document.getElementById("map");
+        if(mapElement) {
+            mapElement.innerHTML = "";
+        }
 
         this.map.forEach((row, y) => {
             row.forEach((element, x) => {
-                const pieceElement = document.createElement("div");
-                pieceElement.style.gridColumnStart = (y+1).toString();
-                pieceElement.style.gridRowStart = (x+1).toString();
-                pieceElement.classList.add(MAP_PIECES[element[0]]);
-                // pieceElement.classList.add("top-fork");
-                mapElement?.appendChild(pieceElement);
+
+                // if(element.isCollapsed()) {
+                //     const pieceElement = document.createElement("div");
+                //     pieceElement.style.gridColumnStart = (y+1).toString();
+                //     pieceElement.style.gridRowStart = (x+1).toString();
+                //     pieceElement.classList.add("collapsed");
+                //     pieceElement.innerHTML = element.collapsedPiece.toString();
+                //     mapElement?.appendChild(pieceElement);
+                // }
+                // else {
+                //     const pieceElement = document.createElement("div");
+                //     pieceElement.style.gridColumnStart = (y+1).toString();
+                //     pieceElement.style.gridRowStart = (x+1).toString();
+                //     pieceElement.classList.add("unknown");
+                //     pieceElement.innerHTML = element.getEntropy().toString();
+                //     mapElement?.appendChild(pieceElement);
+                // }
+
+                if(element.isCollapsed()) {
+                    const pieceElement = document.createElement("div");
+                    pieceElement.style.gridColumnStart = (y+1).toString();
+                    pieceElement.style.gridRowStart = (x+1).toString();
+                    pieceElement.classList.add(this.MAP_PIECES[element.collapsedPiece]);
+                    mapElement?.appendChild(pieceElement);
+                } 
+                else {
+                    const pieceElement = document.createElement("div");
+                    pieceElement.style.gridColumnStart = (y+1).toString();
+                    pieceElement.style.gridRowStart = (x+1).toString();
+                    pieceElement.classList.add("unknown");
+                    pieceElement.innerHTML = element.getEntropy().toString();
+                    mapElement?.appendChild(pieceElement);
+                }
+
             });
         });
-
     }
 }
 
-let x = new WaveFunction(getNewMap());
-x.run();
+
+
+class WaveFunction {
+    map: GameMap;
+    lastRenderTime;
+    constructor() {
+        this.map = new GameMap();
+        this.lastRenderTime = 0;
+    }
+    
+    run(): void {
+        const elementCoords = this.map.getLowestEntropyElementCoords();
+        const [x, y] = elementCoords;
+        this.collapse(elementCoords);
+        const element = this.map.getElement(elementCoords);
+
+        for(const side in Direction) {
+            if(!isNaN(Number(side))) {
+                let remainingValues = element.getRemainingValues(Number(side));
+                if(remainingValues.size == 1) {
+                    let [newX, newY] = getNextCoords(x, y, Number(side));
+                    if(this.map.inBounds([newX, newY])) {
+                        this.propagate([newX, newY], Number(side), [...remainingValues][0]);
+                    }
+                }
+            }
+        }
+
+
+
+        if(!this.map.isFullCollapsed()) {
+            setTimeout(() => {
+                    requestAnimationFrame(() => this.run());
+                }, 1000);
+            this.map.draw();
+        }
+    }
+
+    collapse(coords: [number, number]): void {
+        this.map.drawPieceOnCoords(coords);
+    }
+
+    propagate(coords: [number, number], side: Direction, value: number): void {
+        // side - side of the element from which the propagation is happening
+        const [x, y] = coords;
+
+        const element = this.map.getElement(coords);
+        if(element.isCollapsed()) {
+            return;
+        }
+
+        const fromSide = getOppositeSide(side);
+        const removed = element.removeValues(value, fromSide, COLLAPSE_RULES);
+
+        if(removed) {
+            for(const side in Direction) {
+                if(!isNaN(Number(side))) {
+                    let remainingValues = element.getRemainingValues(Number(side));
+                    if(remainingValues.size == 1) {
+                        let [newX, newY] = getNextCoords(x, y, Number(side));
+                        if(this.map.inBounds([newX, newY])) {
+                            this.propagate([newX, newY], Number(side), [...remainingValues][0]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+const waveFunction = new WaveFunction();
+waveFunction.run();
 
