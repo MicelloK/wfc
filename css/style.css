@@ -1,0 +1,93 @@
+:root {
+    --map-size: 10;
+}
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    background-color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+#map {
+    height: 100vmin;
+    width: 100vmin;
+    background-color: gainsboro;
+    display: grid;
+    grid-template-columns: repeat(var(--map-size), 1fr);
+    grid-template-rows: repeat(var(--map-size), 1fr);
+}
+
+.vertical-line {
+    background-image: url("../img/line.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.horizontal-line {
+    background-image: url("../img/line.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: rotate(90deg);
+}
+
+.top-left-twist {
+    background-image: url("../img/twist.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.top-right-twist {
+    background-image: url("../img/twist.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: rotate(90deg);
+}
+
+.bottom-right-twist {
+    background-image: url("../img/twist.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: rotate(180deg);
+}
+
+.bottom-left-twist {
+    background-image: url("../img/twist.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: rotate(270deg);
+}
+
+.top-fork {
+    background-image: url("../img/fork.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.right-fork {
+    background-image: url("../img/fork.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: rotate(90deg);
+}
+
+.bottom-fork {
+    background-image: url("../img/fork.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: rotate(180deg);
+}
+
+.left-fork {
+    background-image: url("../img/fork.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: rotate(270deg);
+}
