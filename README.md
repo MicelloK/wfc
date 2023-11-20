@@ -1,3 +1,3 @@
-# maze
+# Wave function collapse
 
-maze game with wave function collapse
+Simple 10 element wave function collapse algorithm.
