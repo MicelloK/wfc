@@ -1,5 +1,7 @@
 :root {
-    --map-size: 10;
+    --map-size: 20;
+    --lines-color: white;
+    --unknown-color: rgba(0, 0, 0, 0.893);
 }
 
 * {
@@ -19,84 +21,44 @@ body {
 #map {
     height: 100vmin;
     width: 100vmin;
-    background-color: gainsboro;
+    background-color: var(--unknown-color);
     display: grid;
     grid-template-columns: repeat(var(--map-size), 1fr);
     grid-template-rows: repeat(var(--map-size), 1fr);
 }
 
-.vertical-line {
-    background-image: url("../img/line.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
+.unknown {
+    color: var(--lines-color);
+    background-color: var(--unknown-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid balck;
 }
 
-.horizontal-line {
-    background-image: url("../img/line.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    transform: rotate(90deg);
+.map-element {
+    background-color: var(--unknown-color);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
 }
 
-.top-left-twist {
-    background-image: url("../img/twist.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
+.line {
+    background-color: var(--lines-color);
 }
 
 .top-right-twist {
-    background-image: url("../img/twist.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    transform: rotate(90deg);
+    border-bottom-left-radius: 50%;
+}
+
+.top-left-twist {
+    border-bottom-right-radius: 50%;
 }
 
 .bottom-right-twist {
-    background-image: url("../img/twist.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    transform: rotate(180deg);
+    border-top-left-radius: 50%;
 }
 
 .bottom-left-twist {
-    background-image: url("../img/twist.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    transform: rotate(270deg);
-}
-
-.top-fork {
-    background-image: url("../img/fork.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-}
-
-.right-fork {
-    background-image: url("../img/fork.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    transform: rotate(90deg);
-}
-
-.bottom-fork {
-    background-image: url("../img/fork.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    transform: rotate(180deg);
-}
-
-.left-fork {
-    background-image: url("../img/fork.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    transform: rotate(270deg);
-}
-
-.unkown {
-    background-color: red;
-}
-
-.collapsed {
-    background-color: yellow;
-    border: 1px solid black;
+    border-top-right-radius: 50%;
 }
